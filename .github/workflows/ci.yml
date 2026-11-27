@@ -62,21 +62,10 @@ jobs:
             Select-Object -First 1
           if (-not $d3dcompiler) { throw 'Windows SDK x64 d3dcompiler_47.dll redistributable was not found.' }
           Copy-Item $d3dcompiler.FullName $package/
+          $vswhere = Join-Path ${env:ProgramFiles(x86)} 'Microsoft Visual Studio/Installer/vswhere.exe'
           $vsPath = & $vswhere -latest -products '*' -property installationPath
           $vcRuntime = Get-ChildItem (Join-Path $vsPath 'VC/Redist/MSVC') -Filter vcruntime140.dll -Recurse -File |
-            Where-Object { $_.FullName -match '\\x64\\Microsoft\.VC[^\\]+\\vcruntime140\.dll
-          Copy-Item victory.example.toml $package/
-          Copy-Item LICENSE $package/
-          Copy-Item README.md $package/
-          Get-ChildItem $package -File | Select-Object Name, Length
-      - name: Upload Windows release package
-        uses: actions/upload-artifact@v4
-        with:
-          name: VI-BR-PORT-windows-x86_64-msvc
-          path: dist/VI-BR-PORT-windows-x86_64-msvc/
-          if-no-files-found: error
-          retention-days: 14
- } |
+            Where-Object { $_.Directory.Name -like 'Microsoft.VC*.CRT' -and $_.Directory.Parent.Name -eq 'x64' } |
             Select-Object -First 1
           if (-not $vcRuntime) { throw 'Visual C++ x64 vcruntime140.dll redistributable was not found.' }
           Copy-Item $vcRuntime.FullName $package/
