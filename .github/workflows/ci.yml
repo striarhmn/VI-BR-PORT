@@ -44,10 +44,29 @@ jobs:
       - uses: Swatinem/rust-cache@v2
       - name: Build Windows release
         run: cargo build --locked --release -p victory
-      - name: Upload Windows executable
+      - name: Inspect release output and Windows imports
+        shell: pwsh
+        run: |
+          Get-ChildItem target/release -File | Select-Object Name, Length
+          $vswhere = Join-Path ${env:ProgramFiles(x86)} 'Microsoft Visual Studio/Installer/vswhere.exe'
+          $dumpbin = & $vswhere -latest -products '*' -find 'VC/Tools/MSVC/**/bin/Hostx64/x64/dumpbin.exe' | Select-Object -First 1
+          if (-not $dumpbin) { throw 'Visual Studio dumpbin.exe was not found; cannot record the executable import table.' }
+          & $dumpbin /dependents target/release/victory.exe
+          if ($LASTEXITCODE -ne 0) { throw 'Could not inspect victory.exe imports.' }
+      - name: Stage Windows release package
+        shell: pwsh
+        run: |
+          $package = 'dist/VI-BR-PORT-windows-x86_64-msvc'
+          New-Item -ItemType Directory -Force $package | Out-Null
+          Copy-Item target/release/victory.exe $package/
+          Copy-Item victory.example.toml $package/
+          Copy-Item LICENSE $package/
+          Copy-Item README.md $package/
+          Get-ChildItem $package -File | Select-Object Name, Length
+      - name: Upload Windows release package
         uses: actions/upload-artifact@v4
         with:
           name: VI-BR-PORT-windows-x86_64-msvc
-          path: target/release/victory.exe
+          path: dist/VI-BR-PORT-windows-x86_64-msvc/
           if-no-files-found: error
           retention-days: 14
