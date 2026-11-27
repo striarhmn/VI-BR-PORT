@@ -45,7 +45,7 @@ jobs:
         shell: pwsh
         run: |
           Get-ChildItem target/release -File | Select-Object Name, Length
-          $vswhere = Join-Path \${env:ProgramFiles(x86)} 'Microsoft Visual Studio/Installer/vswhere.exe'
+          $vswhere = Join-Path ${env:ProgramFiles(x86)} 'Microsoft Visual Studio/Installer/vswhere.exe'
           $dumpbin = & $vswhere -latest -products '*' -find 'VC/Tools/MSVC/**/bin/Hostx64/x64/dumpbin.exe' | Select-Object -First 1
           if (-not $dumpbin) { throw 'Visual Studio dumpbin.exe was not found; cannot record the executable import table.' }
           & $dumpbin /dependents target/release/victory.exe
@@ -56,7 +56,7 @@ jobs:
           $package = 'dist/VI-BR-PORT-windows-x86_64-msvc'
           New-Item -ItemType Directory -Force $package | Out-Null
           Copy-Item target/release/victory.exe $package/
-          $redistRoot = Join-Path \${env:ProgramFiles(x86)} 'Windows Kits/10/Redist/D3D'
+          $redistRoot = Join-Path ${env:ProgramFiles(x86)} 'Windows Kits/10/Redist/D3D'
           $d3dcompiler = Get-ChildItem $redistRoot -Filter d3dcompiler_47.dll -Recurse -File |
             Where-Object { $_.FullName -match '\\x64\\d3dcompiler_47\.dll$' } |
             Select-Object -First 1
